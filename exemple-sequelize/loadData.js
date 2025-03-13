@@ -15,7 +15,7 @@ const { sequelize } = require('./src/config/database');
 const { logger } = require('./src/config/logger');
 
 // Importar models
-const { Youtuber, PerfilYoutuber, Video, Categoria, VideosCategories } = require('./src/models');
+const { Youtuber, PerfilYoutuber, Video, Categoria, VideosCategories, Usuari, Comentari, Reaccio } = require('./src/models');
 
 // Rutes als arxius CSV
 const BASE_PATH = path.join(__dirname, process.env.DATA_DIR_PATH, 'youtubers_programacio');
@@ -24,7 +24,10 @@ const CSV_FILES = {
   PERFILS: path.join(BASE_PATH, 'youtuber_profiles.csv'),
   CATEGORIES: path.join(BASE_PATH, 'categories.csv'),
   VIDEOS: path.join(BASE_PATH, 'videos.csv'),
-  VIDEOS_CATEGORIES: path.join(BASE_PATH, 'video_categories.csv')
+  VIDEOS_CATEGORIES: path.join(BASE_PATH, 'video_categories.csv'),
+  USERS: path.join(BASE_PATH, 'users.csv'), 
+  COMMENTS: path.join(BASE_PATH, 'comments.csv'), 
+  REACTIONS: path.join(BASE_PATH, 'reactions.csv')
 };
 
 /**
@@ -53,6 +56,83 @@ async function llegirFitxerCsv(ruta_fitxer) {
     });
   } catch (error) {
     logger.error(`Error llegint ${ruta_fitxer}:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Carrega els usuaris
+ * @param {Array} users Dades dels usuaris
+ */
+async function carregarUsuaris(users) {
+  try {
+    logger.info(`Carregant ${users.length} usuaris...`);
+    
+    for (const user of users) {
+      await Usuari.create({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        password: user.password,
+        nom: user.nom,
+        idioma: user.idioma,
+        data_registre: user.data_registre
+      });
+    }
+    
+    logger.info("Usuaris carregats correctament");
+  } catch (error) {
+    logger.error("Error carregant usuaris:", error);
+    throw error;
+  }
+}
+
+/**
+ * Carrega els comentaris
+ * @param {Array} comments Dades dels comentaris
+ */
+async function carregarComentaris(comments) {
+  try {
+    logger.info(`Carregant ${comments.length} comentaris...`);
+    
+    for (const comment of comments) {
+      await Comentari.create({
+        id: comment.id,
+        usuari_id: comment.usuari_id,
+        video_id: comment.video_id,
+        text: comment.text,
+        data_comentari: comment.data_comentari
+      });
+    }
+    
+    logger.info("Comentaris carregats correctament");
+  } catch (error) {
+    logger.error("Error carregant comentaris:", error);
+    throw error;
+  }
+}
+
+/**
+ * Carrega les reaccions
+ * @param {Array} reactions Dades de les reaccions
+ */
+async function carregarReaccions(reactions) {
+  try {
+    logger.info(`Carregant ${reactions.length} reaccions...`);
+    
+    for (const reaction of reactions) {
+      await Reaccio.create({
+        id: reaction.id,
+        usuari_id: reaction.usuari_id,
+        video_id: reaction.video_id,
+        tipus_reaccio: reaction.tipus_reaccio,
+        data_reaccio: reaction.data_reaccio
+      });
+    }
+    
+    logger.info("Reaccions carregades correctament");
+  } catch (error) {
+    logger.error("Error carregant reaccions:", error);
     throw error;
   }
 }
@@ -116,11 +196,10 @@ async function carregarCategories(categories) {
   try {
     logger.info(`Carregant ${categories.length} categories...`);
     
-    for (const categoria of categories) {
+    for (const category of categories) {
       await Categoria.create({
-        id: categoria.id,
-        titol: categoria.name,
-        descripcio: categoria.description
+        id: category.id,
+        nom: category.name
       });
     }
     
@@ -201,6 +280,9 @@ async function carregarTotesDades() {
     const categories = await llegirFitxerCsv(CSV_FILES.CATEGORIES);
     const videos = await llegirFitxerCsv(CSV_FILES.VIDEOS);
     const videos_categories = await llegirFitxerCsv(CSV_FILES.VIDEOS_CATEGORIES);
+    const users = await llegirFitxerCsv(CSV_FILES.USERS); 
+    const comments = await llegirFitxerCsv(CSV_FILES.COMMENTS); 
+    const reactions = await llegirFitxerCsv(CSV_FILES.REACTIONS); 
     
     // Carregar les dades en ordre per respectar dependències
     await carregarYoutubers(youtubers);
@@ -208,13 +290,15 @@ async function carregarTotesDades() {
     await carregarCategories(categories);
     await carregarVideos(videos);
     await carregarVideosCategories(videos_categories);
+    await carregarUsuaris(users); 
+    await carregarComentaris(comments); 
+    await carregarReaccions(reactions);
     
     logger.info("Totes les dades han estat carregades correctament a la base de dades!");
     
   } catch (error) {
     logger.error("Error durant el procés de càrrega:", error);
   } finally {
-    // Tancar connexió a la base de dades quan acabem
     // await sequelize.close();
     // logger.info("Connexió a la base de dades tancada");
   }

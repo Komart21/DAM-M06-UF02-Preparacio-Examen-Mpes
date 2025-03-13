@@ -21,6 +21,7 @@ const rutesYoutuber = require('./src/routes/rutesYoutuber');
 const rutesVideo = require('./src/routes/rutesVideo');
 const rutesCategoria = require('./src/routes/rutesCategoria');
 const rutesLlistes = require('./src/routes/rutesLlistes');
+const rutesUsuari = require('./src/routes/rutesUsuari');
 
 // Crear instància d'Express
 const app = express();
@@ -59,12 +60,13 @@ app.use('/api/youtubers', rutesYoutuber);
 app.use('/api/videos', rutesVideo);
 app.use('/api/categories', rutesCategoria);
 app.use('/api/llistes', rutesLlistes);
+app.use('/api/usuaris', rutesUsuari);
 
 // Gestió centralitzada d'errors (importada del mòdul gestorErrors)
 app.use(gestorErrors);
 
 // Port per defecte 3000 si no està definit a les variables d'entorn
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3010;
 
 /**
  * Funció d'inicialització del servidor
